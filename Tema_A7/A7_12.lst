@@ -1,0 +1,105 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit,printf,scanf               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll 
+     9                                  import printf msvcrt.dll
+    10                                  import scanf msvcrt.dll
+    11                                     ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+    12                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    13                                  
+    14                                  ; our data is declared here (the variables needed by our program)
+    15                                  segment data use32 class=data
+    16                                      ; ...
+    17 00000000 613D2D256420286261-         format1 db "a=-%d (base 10), a=" ,0
+    17 00000009 7365203130292C2061-
+    17 00000012 3D00               
+    18 00000014 25787C00                    format2 db "%x|" ,0
+    19 00000018 286261736520313629-         format3 db "(base 16)",0
+    19 00000021 00                 
+    20 00000022 39F50000                    a dd 1111010100111001b;0000101011000111
+    21 00000026 00000000                    b dd 0
+    22 0000002A 00000000                    d dd 0
+    23 0000002E 00<rept>                    e times 4 db 0
+    24                                      
+    25                                      
+    26                                  ; our code starts here
+    27                                  segment code use32 class=code
+    28                                      start:
+    29                                          ; ...A negative number a (a: dword) is given. Display the value of that number in base 10 and in the base 16 in the following format: "a = <base_10> (base 10), a = <base_16> (base 16)"
+    30 00000000 A1[22000000]                    mov eax,[a]
+    31                                          ;mov eax,2
+    32 00000005 35FFEF0000                      xor eax,1110111111111111b
+    33 0000000A 83C001                          add eax, 0000000000000001b
+    34                                          
+    35 0000000D A3[22000000]                    mov dword[a],eax
+    36 00000012 50                              push eax
+    37 00000013 68[00000000]                    push format1
+    38 00000018 FF15[00000000]                  call[printf]
+    39 0000001E A1[22000000]                    mov eax,dword[a]
+    40 00000023 83C408                          add esp,4*2
+    41 00000026 BF03000000                      mov edi, 3
+    42 0000002B B904000000                      mov ECX,4; the loop will be repeted 4 times
+    43 00000030 FD                              std
+    44                                          Repeta1:   
+    45 00000031 BB00000000                          mov ebx,0; we compute the result in ebx
+    46                                              ;DIGIT 1
+    47 00000036 A801                                test al,1
+    48 00000038 7A03                                jpe done
+    49 0000003A 83C301                                  add ebx,1
+    50                                              done:
+    51 0000003D D1E8                                shr eax,1;we rotate the bits to left with one position                                   
+    52                                              
+    53 0000003F A801                                test al,1
+    54 00000041 7A03                                jpe done2
+    55 00000043 83C302                                  add ebx,2
+    56                                              done2:
+    57 00000046 D1E8                                shr eax,1
+    58                                              
+    59 00000048 A801                                test al,1
+    60 0000004A 7A03                                jpe done3
+    61 0000004C 83C304                                  add ebx,4
+    62                                              done3:
+    63 0000004F D1E8                                shr eax,1
+    64                                              
+    65 00000051 A801                                 test al,1
+    66 00000053 7A03                                jpe done4
+    67 00000055 83C308                                  add ebx,8
+    68                                              done4:
+    69 00000058 D1E8                                shr eax,1
+    70                                              
+    71 0000005A 890D[2A000000]                      mov dword[d],ecx
+    72 00000060 A3[22000000]                        mov dword[a],eax
+    73 00000065 899F[2E000000]                      mov [e+edi],ebx
+    74 0000006B FFB7[2E000000]                      push dword [e+edi]
+    75 00000071 68[14000000]                        push format2
+    76 00000076 FF15[00000000]                      call [printf]
+    77 0000007C 83C408                              add esp, 4*2
+    78 0000007F 8B0D[2A000000]                      mov ecx,dword[d]
+    79 00000085 A1[22000000]                        mov eax,dword[a]
+    80 0000008A 4F                                  dec edi
+    81 0000008B E2A4                            loop Repeta1
+    82                                          
+    83 0000008D B904000000                      mov ecx,4
+    84 00000092 BF00000000                      mov edi,0
+    85                                          repeta2:
+    86 00000097 890D[2A000000]                      mov dword[d],ecx
+    87 0000009D FFB7[2E000000]                      push dword [e+edi]
+    88 000000A3 68[14000000]                        push format2
+    89 000000A8 FF15[00000000]                      call [printf]
+    90 000000AE 83C408                              add esp,4*2
+    91 000000B1 8B0D[2A000000]                      mov ecx,dword[d]
+    92 000000B7 47                                  inc edi
+    93 000000B8 E2DD                            loop repeta2
+    94                                          
+    95                                          
+    96 000000BA 68[18000000]                    push format3
+    97 000000BF FF15[00000000]                  call [printf]
+    98 000000C5 83C404                          add esp, 4
+    99                                      
+   100                                          ; exit(0)
+   101 000000C8 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+   102 000000CA FF15[00000000]                  call    [exit]       ; call exit to terminate the program

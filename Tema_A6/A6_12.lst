@@ -1,0 +1,55 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                  
+    14                                      ;Given an array A of doublewords, build two arrays of bytes:  
+    15                                      ;- array B1 contains as elements the lower part of the lower words from A
+    16                                      ;- array B2 contains as elements the higher part of the higher words from A
+    17                                      ; ...
+    18                                      
+    19 00000000 785634124433221188-         s dd 12345678h, 11223344h, 55667788h
+    19 00000009 776655             
+    20                                      len_s equ ($-s)/4
+    21 0000000C 00<rept>                    b1 times len_s db 0 
+    22 0000000F 00<rept>                    b2 times len_s db 0
+    23                                      
+    24                                  ; our code starts here
+    25                                  segment code use32 class=code
+    26                                      start:
+    27                                          ; ...
+    28 00000000 BE[00000000]                    mov esi, s; esi contains the destination of the array s
+    29 00000005 FC                              cld; clear direction flag
+    30 00000006 BF00000000                      mov edi,0; edi is de current index of the array b1 and b2
+    31 0000000B B903000000                      mov ecx, len_s; ecx will contain the idex of the array a1
+    32                                          
+    33                                          repeta:
+    34 00000010 66AD                                lodsw; in ax we will have the low word (least significant) of the current doubleword from the string
+    35                                              ;ax=5678
+    36                                              ;shl ax,8
+    37                                              ;ax=7800
+    38                                              ;ah=78
+    39 00000012 8887[0C000000]                      mov [b1+edi],al
+    40                                              
+    41                                              
+    42 00000018 66AD                                lodsw; in ax we will have the high word (least significant) of the current doubleword from the string
+    43                                              ;ax=1234
+    44                                              ;shr ax,8
+    45                                              ;ax=0012
+    46 0000001A 88A7[0F000000]                      mov [b2+edi],ah
+    47                                              
+    48 00000020 47                                  inc edi
+    49 00000021 E2ED                            loop repeta
+    50                                          
+    51                                          
+    52                                          ; exit(0)
+    53 00000023 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    54 00000025 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

@@ -1,0 +1,3 @@
+The numbers are: Number is: 30 
+Number is: 7 
+

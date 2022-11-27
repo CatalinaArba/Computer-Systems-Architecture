@@ -1,0 +1,52 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 BB9A                        a dw 1001101010111011b
+    15 00000002 9935                        b dw 0011010110011001b
+    16 00000004 00000000                    c dd 0
+    17                                  ; our code starts here
+    18                                  segment code use32 class=code
+    19                                      start:
+    20                                          ; ...
+    21 00000000 66BB0000                        mov bx,0
+    22 00000004 66BA0000                        mov dx,0;       we compute the result in dx:bx
+    23                                          
+    24                                          
+    25 00000008 6683E380                        and bx,1111111110000000b;    we force the value of bits 0-6 from result to have the value 0
+    26                                          ;=>bx=0000000000000000(binary)=0000(hex)
+    27                                          
+    28 0000000C 66A1[00000000]                  mov ax,[a];
+    29 00000012 6683E007                        and ax,0000000000000111b; we isolate bits 0-2 of A
+    30 00000016 B107                            mov cl,7
+    31 00000018 66D3C0                          rol ax,cl; we rotate 6 position to left
+    32 0000001B 6609C3                          or bx,ax; we put the bits into the result
+    33                                          ;=>bx=0000000110000000(binary)=0180(hex)
+    34                                          
+    35 0000001E 66A1[02000000]                  mov ax,[b]
+    36 00000024 6625003F                        and ax,0011111100000000b; we isolate bits 8-13 of B
+    37 00000028 B102                            mov cl, 2
+    38 0000002A 66D3C0                          rol ax,cl; we rotate 2 position to right
+    39 0000002D 6609C3                          or bx,ax; we put the bits into the result
+    40                                          ;=>bx=1101010110000000(binary)=d580(hex)
+    41                                          
+    42 00000030 6683CAFF                        or dx,1111111111111111b; force the value of bits 0-15 from result to have the value 1
+    43                                          ;=>dx=1111111111111111(binary)=FFFF(hex)
+    44                                          
+    45 00000034 6652                            push dx; dx=1111111111111111(binary)=FFFF(hex)
+    46 00000036 6653                            push bx; bx=1101010110000000(binary)=d580(hex)
+    47 00000038 58                              pop eax
+    48                                          
+    49 00000039 A3[04000000]                    mov[c],eax
+    50                                          ; exit(0)
+    51 0000003E 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    52 00000040 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

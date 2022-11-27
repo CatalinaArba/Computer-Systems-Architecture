@@ -1,0 +1,60 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 616263646566                s1 db 'a','b','c','d','e','f'
+    15                                      l1 equ $-s1
+    16 00000006 3132333435                  s2 db '1','2','3','4','5'
+    17                                      l2 equ $-s2    
+    18 0000000B 00<rept>                    d times l2+l1 db 0
+    19                                      
+    20                                  ; our code starts here
+    21                                  segment code use32 class=code
+    22                                      start:
+    23                                          ; ...
+    24                                      ;Two character strings S1 and S2 are given. Obtain the string D by concatenating the elements found on even positions in S2 and the elements found on odd positions in S1.
+    25                                      ;S1: 'a', 'b', 'c', 'd', 'e', 'f'
+    26                                      ;S2: '1', '2', '3', '4', '5'
+    27                                      ;D: '2', '4','a','c','e'
+    28                                      
+    29 00000000 B902000000                      mov ecx,l2/2
+    30 00000005 BE01000000                      mov esi,1
+    31                                          
+    32 0000000A BF00000000                      mov edi,0
+    33 0000000F E312                            jecxz Sfarsit1
+    34                                          Repeta1:
+    35 00000011 8A86[06000000]                       mov al, [s2+esi]
+    36 00000017 8887[0B000000]                       mov [d+edi],al
+    37                                               ;inc esi
+    38                                               ;inc esi
+    39 0000001D 83C602                               add esi, 2
+    40 00000020 47                                   inc edi
+    41 00000021 E2EE                            loop Repeta1
+    42                                          Sfarsit1:
+    43                                          
+    44 00000023 B900000000                      mov ecx,0
+    45 00000028 B903000000                      mov ecx,l1/2
+    46 0000002D BE00000000                      mov esi,0
+    47                                   
+    48 00000032 E311                            jecxz Sfarsit2
+    49                                          Repeta2:
+    50 00000034 8A86[00000000]                      mov al, [s1+esi]
+    51 0000003A 8887[0B000000]                      mov [d+edi],al
+    52 00000040 46                                  inc esi
+    53 00000041 46                                  inc esi
+    54 00000042 47                                  inc edi
+    55 00000043 E2EF                            loop Repeta2
+    56                                          Sfarsit2:    
+    57                                          
+    58                                          ; exit(0)
+    59 00000045 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    60 00000047 FF15[00000000]                  call    [exit]       ; call exit to terminate the program
