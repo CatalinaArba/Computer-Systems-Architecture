@@ -1,0 +1,77 @@
+     1                                  ;Given an array A of doublewords, build two arrays of bytes:  
+     2                                  ; - array B1 contains as elements the lower part of the lower words from A
+     3                                  ; - array B2 contains as elements the higher part of the higher words from A 
+     4                                  
+     5                                  
+     6                                  bits 32 ; assembling for the 32 bits architecture
+     7                                  
+     8                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     9                                  global start        
+    10                                  
+    11                                  ; declare external functions needed by our program
+    12                                  extern exit              ; tell nasm that exit exists even if we won't be defining it
+    13                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+    14                                                ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    15                                  
+    16                                  ; our data is declared here (the variables needed by our program)
+    17                                  segment data use32 class=data
+    18                                      ; ...
+    19 00000000 153234123399872363-         s dd 12343215h, 23879933h, 13982763h, 87625189h
+    19 00000009 27981389516287     
+    20                                      len equ ($-s)/4
+    21 00000010 00<rept>                    b1 times len db 0
+    22 00000014 00<rept>                    b2 times len db 0
+    23                                  
+    24                                      
+    25                                  
+    26                                  ; our code starts here
+    27                                  segment code use32 class=code
+    28                                      start:
+    29                                          ; ...; - array B1 contains as elements the lower part of the lower words from A
+    30                                          
+    31                                  
+    32 00000000 BE[00000000]                    mov esi, s; in esi we will store the far address of the string s
+    33 00000005 FC                              cld; parse the string from left to right (DF=0)
+    34 00000006 B904000000                      mov ecx, len
+    35 0000000B BF[10000000]                    mov edi, b1 ; store the far address of the destinaiton d
+    36                                          do:
+    37 00000010 66AD                                lodsw; in ax we will have the low word (least significant) of the current doubleword from the string
+    38                                              ; ax = 3215; 
+    39                                              ;al = 15
+    40                                  
+    41 00000012 8807                                mov [edi], al
+    42                                   
+    43                                          
+    44 00000014 66AD                                lodsw
+    45                                              ;inc esi
+    46                                              ;inc esi
+    47 00000016 47                                  inc edi
+    48                                              
+    49                                                      
+    50 00000017 E2F7                            loop do ; if there are more elements (ecx>0) resume the loop
+    51                                          
+    52                                          
+    53                                          ; - array B2 contains as elements the higher part of the higher words from A
+    54                                          
+    55 00000019 BE00000000                      mov esi, 0
+    56 0000001E BE[00000000]                    mov esi, s
+    57 00000023 B900000000                      mov ecx, 0
+    58 00000028 B904000000                      mov ecx, len
+    59 0000002D BF[14000000]                    mov edi, b2
+    60                                          do1:
+    61 00000032 66AD                                lodsw; in ax we will have the low word of the current doubleword from the string
+    62 00000034 66AD                                lodsw ; in ax we will have the high word (least significant) of the current doubleword from the string
+    63                                              ;ax = 1234
+    64                                              ;ah=12
+    65 00000036 8827                                mov [edi], ah
+    66                                              
+    67 00000038 47                                  inc edi
+    68                                              ;stosb
+    69                                              
+    70                                              
+    71 00000039 E2F7                            loop do1
+    72                                  
+    73                                           
+    74                                          ; exit(0)
+    75 0000003B 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    76 0000003D FF15[00000000]                  call    [exit]       ; call exit to terminate the program

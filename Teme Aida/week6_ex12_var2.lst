@@ -1,0 +1,124 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, scanf, printf               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll
+     9                                  import printf msvcrt.dll
+    10                                  import scanf msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+    11                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    12                                  
+    13                                  ; our data is declared here (the variables needed by our program)
+    14                                  segment data use32 class=data
+    15                                      ; ...
+    16                                      ;s dd 12343215h, 23879933h, 13982763h, 87625189h
+    17                                      ;len equ ($-s)/4
+    18                                      ;b1 times len db 0
+    19                                      ;b2 times len db 0
+    20                                      
+    21 00000000 <res 00000064>              sir resb 100
+    22 00000064 25642000                    formats db "%d ", 0
+    23 00000068 00                          ls db 0
+    24 00000069 <res 00000064>              b1 resb 100
+    25 000000CD <res 00000064>              b2 resb 100
+    26 00000131 64000000                    n dd 100
+    27                                      
+    28 00000135 6E756D626572206973-         formatp db "number is %d", 10, 13, 0
+    28 0000013E 2025640A0D00       
+    29                                  
+    30                                  ; our code starts here
+    31                                  segment code use32 class=code
+    32                                      start:
+    33                                          ; ...
+    34                                          ; - array B1 contains as elements the lower part of the lower words from A
+    35                                          
+    36 00000000 BE[69000000]                    mov esi, b1
+    37 00000005 B900000000                      mov ecx, 0
+    38                                          ;mov edi, 0
+    39                                          readuntil0:
+    40 0000000A 60                                  pushad
+    41                                              
+    42                                              ;scanf
+    43 0000000B 56                                  push dword esi
+    44 0000000C 68[64000000]                        push dword formats
+    45 00000011 FF15[00000000]                      call [scanf]
+    46 00000017 83C408                              add esp, 4*2
+    47                                              
+    48 0000001A 61                                  popad
+    49 0000001B 833E00                              cmp dword[esi], 0
+    50 0000001E 7415                                je endl
+    51                                                  
+    52                                                  ; printf
+    53 00000020 56                                      push dword esi
+    54 00000021 68[35010000]                            push dword formatp
+    55 00000026 FF15[00000000]                          call [printf]
+    56 0000002C 83C408                                  add esp, 4*2
+    57                                                  
+    58                                                  
+    59                                                  ;mov eax, esi
+    60                                                  ;lodsw
+    61                                                  ;mov [b1+edi], al
+    62                                                  
+    63                                                  ;lodsw
+    64                                                  ;mov [b2+edi], ah
+    65                                                  ;inc edi
+    66                                                  
+    67 0000002F 83C604                                  add esi, 4
+    68 00000032 41                                      inc ecx
+    69 00000033 EBD5                            jmp readuntil0
+    70                                          endl:
+    71                                          
+    72                                          ;mov [ls], edi
+    73                                          ;mov esi, b1
+    74                                          ;mov ecx, [ls]
+    75                                          ;printing:
+    76                                          ;    lodsd
+    77                                          ;    push dword eax
+    78                                           ;   push dword formatp
+    79                                           ;   call [printf]
+    80                                           ;   add esp, 4*2
+    81                                              
+    82                                          ;loop printing
+    83                                          
+    84                                          
+    85                                          
+    86                                          
+    87                                          
+    88                                          
+    89                                          
+    90                                          
+    91                                          
+    92                                          
+    93                                          
+    94                                          
+    95                                          
+    96                                          
+    97                                          
+    98                                          ;mov ESI, s; in eds:edi we will store the FAR address of the string s
+    99                                          ;cld; parse the string from left to right (DF=0) clear direction flag
+   100                                          ;mov ECX, len
+   101                                          ;mov EDI, 0
+   102                                          ;do:
+   103                                          ;    lodsw; in ax we will have the low word (least significant) of the current doubleword from the string
+   104                                              
+   105                                              ; ax= 3215; al=15
+   106                                          ;    mov [b1+edi], al
+   107                                              
+   108                                          ;    lodsw
+   109                                              ;ax=1234; ah=12
+   110                                          ;    mov [b2+edi], ah
+   111                                          ;    inc edi
+   112                                                     
+   113                                          ;loop do ; if there are more elements (ecx>0) resume the loop
+   114                                          
+   115                                          ;mov DX, b1
+   116                                          
+   117                                          
+   118                                      
+   119                                          
+   120                                      
+   121                                          ; exit(0)
+   122 00000035 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+   123 00000037 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

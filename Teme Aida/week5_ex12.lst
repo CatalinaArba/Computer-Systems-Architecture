@@ -1,0 +1,70 @@
+     1                                  ;Two character strings S1 and S2 are given. Obtain the string D by concatenating the elements found on even positions in S2 and the elements found on odd positions in S1.
+     2                                  ;Example:
+     3                                  ;S1: 'a', 'b', 'c', 'd', 'e', 'f'
+     4                                  ;S2: '1', '2', '3', '4', '5'
+     5                                  ;D: '2', '4','a','c','e'
+     6                                  
+     7                                  bits 32 ; assembling for the 32 bits architecture
+     8                                  
+     9                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+    10                                  global start        
+    11                                  
+    12                                  ; declare external functions needed by our program
+    13                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+    14                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+    15                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    16                                  
+    17                                  ; our data is declared here (the variables needed by our program)
+    18                                  segment data use32 class=data
+    19                                      ; ...
+    20 00000000 616263646566                s1 db 'a', 'b', 'c', 'd', 'e', 'f'
+    21                                      l1 equ $-s1 ; compute the length of the string s1 in l1
+    22 00000006 3132333435                  s2 db '1', '2', '3', '4', '5'
+    23                                      l2 equ $-s2 ; compute the length of the string s2 in l2
+    24 0000000B 00<rept>                    d times l2 db 0 ; reserve l2 bytes for the destination string and initialize it
+    25                                      
+    26                                  
+    27                                  ; our code starts here
+    28                                  segment code use32 class=code
+    29                                      start:
+    30                                          ; ...
+    31 00000000 B905000000                      mov ECX, l2; I put the legth l2 in ECX in order to make the loop
+    32 00000005 BE01000000                      mov esi, 1
+    33 0000000A BF00000000                      mov edi, 0
+    34 0000000F E318                            jecxz Finish
+    35                                          Do:
+    36 00000011 F7C601000000                        test esi, 01 ; check if esi is odd or even
+    37 00000017 7B0D                                jpo even_nr  ;jump short if parity odd
+    38 00000019 8A86[05000000]                          mov AL, [s2+esi-1]
+    39 0000001F 8887[0B000000]                          mov [d+edi], AL
+    40 00000025 47                                      inc edi
+    41                                              even_nr:
+    42 00000026 46                                  inc esi
+    43 00000027 E2E8                            loop Do
+    44                                          Finish: 
+    45                                          
+    46 00000029 B900000000                      mov ECX, 0
+    47 0000002E B906000000                      mov ECX, l1 ; I put the length l1 in ECX in order to make the loop
+    48 00000033 BE01000000                      mov esi, 1
+    49 00000038 E318                            jecxz Finish1
+    50                                          Do1:
+    51 0000003A F7C601000000                        test esi, 01 ; check if esi is odd or even
+    52 00000040 7A0D                                jpe odd_nr   ;jump short if parity even
+    53 00000042 8A86[FFFFFFFF]                          mov AL, [s1+esi-1]
+    54 00000048 8887[0B000000]                          mov [d+edi], AL
+    55 0000004E 47                                      inc edi
+    56                                              odd_nr:
+    57 0000004F 46                                  inc esi
+    58 00000050 E2E8                            loop Do1
+    59                                          Finish1:
+    60                                          
+    61                                          
+    62                                          
+    63                                          
+    64                                              
+    65                                          
+    66                                          
+    67                                      
+    68                                          ; exit(0)
+    69 00000052 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    70 00000054 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

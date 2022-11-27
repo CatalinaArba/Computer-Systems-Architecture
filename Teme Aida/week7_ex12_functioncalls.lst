@@ -1,0 +1,89 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, printf               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll 
+     9                                  import printf msvcrt.dll   ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+    10                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    11                                  
+    12                                  ; our data is declared here (the variables needed by our program)
+    13                                  segment data use32 class=data
+    14                                      ; ...
+    15 00000000 A5A5A5A5                    a dd 10100101101001011010010110100101b
+    16 00000004 61203D202578202862-         format db "a = %x (base 16)", 10, 13, 0
+    16 0000000D 617365203136290A0D-
+    16 00000016 00                 
+    17 00000017 61203D202564202862-         formatdec db "a = %d (base 10)", 10, 13, 0
+    17 00000020 617365203130290A0D-
+    17 00000029 00                 
+    18                                      
+    19                                      
+    20                                  
+    21                                  ; our code starts here
+    22                                  segment code use32 class=code
+    23                                      start:
+    24                                          ; ...
+    25                                          ; A negative number a (a: dword) is given. Display the value of that number in base 10 and in the base 16 in the following format: "a = <base_10> (base 10), a = <base_16> (base 16)" 
+    26                                          
+    27 00000000 FF35[00000000]                  push dword [a]
+    28 00000006 68[17000000]                    push dword formatdec
+    29 0000000B FF15[00000000]                  call [printf]
+    30 00000011 83C408                          add esp, 4*2
+    31                                          
+    32                                          
+    33 00000014 FF35[00000000]                  push dword [a]
+    34 0000001A 68[04000000]                    push dword format
+    35 0000001F FF15[00000000]                  call [printf]
+    36 00000025 83C408                          add esp, 4*2
+    37                                          
+    38                                          
+    39                                          
+    40                                          
+    41                                          
+    42                                          
+    43                                          
+    44                                          
+    45                                          ;mov eax, [a]
+    46                                          ;mov edi, s
+    47                                          
+    48                                          ;do:
+    49                                              ;mov cx, [sixteen]
+    50                                             ; push eax
+    51                                              ;pop ax
+    52                                              ;pop dx
+    53                                              ;div cx; ax = eax/sixteen; dx= eax%sixteen
+    54                                              ;cmp dx, 0
+    55                                              ;je enda
+    56                                                 ; mov ebx, 0
+    57                                                 ; mov bx, dx
+    58                                                 ; push ebx
+    59                                                 ; mov [edi], ebx
+    60                                                 ; add edi, 4
+    61                                                  ;jmp do
+    62                                              ;enda:
+    63                                              
+    64                                          ;loop do
+    65                                          
+    66                                         ; mov esi, s
+    67                                         ; mov ecx, [ls]
+    68                                          ;printing:
+    69                                          ;    lodsd
+    70                                            ;  pushad
+    71                                              
+    72                                            ;  push dword eax
+    73                                            ;  push dword formatdec
+    74                                            ;  call [printf]
+    75                                            ;  add esp, 4*2
+    76                                              
+    77                                          ;    popad
+    78                                          ;loop printing
+    79                                         
+    80                                  
+    81                                          
+    82                                      
+    83                                          ; exit(0)
+    84 00000028 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    85 0000002A FF15[00000000]                  call    [exit]       ; call exit to terminate the program

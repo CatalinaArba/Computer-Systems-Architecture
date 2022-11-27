@@ -1,0 +1,67 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, printf               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                  import printf msvcrt.dll                          ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  
+    13                                  extern Letters
+    14                                  segment data use32 class=data
+    15                                      ; ...
+    16 00000000 6162636400                  sir1 db 'a', 'b', 'c', 'd', 0
+    17 00000005 6566676800                  sir2 db 'e', 'f', 'g', 'h', 0
+    18                                      len equ ($-sir2)
+    19                                      
+    20 0000000A 00<rept>                    rez times len db 0
+    21                                      
+    22 0000000F 257300                      format_string db "%s", 0
+    23                                  
+    24                                  ; our code starts here
+    25                                  segment code use32 class=code
+    26                                      start:
+    27                                          ; ...Two strings of characters of equal length are given. 
+    28                                          ;Calculate and display the results of the interleaving of the letters, 
+    29                                          ;for the two possible interlaces (the letters of the first string in an even position, 
+    30                                          ;respectively the letters from the first string in an odd positions)
+    31                                          
+    32                                          ; 0 1 2 3 4 5 6 7
+    33                                          ; a e b f c g d h 
+    34 00000000 68[0A000000]                   push dword rez
+    35 00000005 68[05000000]                   push dword sir2
+    36 0000000A 68[00000000]                   push dword sir1
+    37 0000000F 6A05                           push dword len
+    38 00000011 E8(00000000)                   call Letters
+    39                                         
+    40 00000016 50                             push eax
+    41 00000017 B905000000                     mov ecx, len
+    42                                         do:
+    43 0000001C AC                                  lodsb
+    44 0000001D 60                                  pushad
+    45                                              
+    46 0000001E 50                                  push dword eax
+    47 0000001F 68[0F000000]                        push dword format_string
+    48 00000024 FF15[00000000]                      call [printf]
+    49 0000002A 83C408                              add esp, 4*2
+    50                                              
+    51 0000002D 61                                  popad
+    52                                              
+    53 0000002E E2EC                            loop do
+    54                                       
+    55                                         
+    56                                         
+    57                                         
+    58                                         
+    59                                         
+    60                                          
+    61                                          
+    62                                      
+    63                                      
+    64                                      
+    65                                          ; exit(0)
+    66 00000030 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    67 00000032 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

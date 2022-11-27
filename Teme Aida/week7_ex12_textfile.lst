@@ -1,0 +1,117 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, fopen, fclose, fprintf, scanf, printf              ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                  import scanf msvcrt.dll
+    10                                  import fopen msvcrt.dll
+    11                                  import fclose msvcrt.dll
+    12                                  import fprintf msvcrt.dll           ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    13                                  import printf msvcrt.dll
+    14                                  
+    15                                  
+    16                                  ; our data is declared here (the variables needed by our program)
+    17                                  segment data use32 class=data
+    18                                      ; ...
+    19 00000000 FFFFFFFF                    fd dd -1
+    20 00000004 7700                        accmode db "w", 0
+    21 00000006 7765656B3765783132-         filename db "week7ex12file.txt", 0
+    21 0000000F 66696C652E74787400 
+    22                                      
+    23 00000018 456E746572206E756D-         format db "Enter number %d ", 10, 13, 0
+    23 00000021 626572202564200A0D-
+    23 0000002A 00                 
+    24 0000002B 64000000                    n dd 100
+    25                                      
+    26 0000002F 256400                      formats db "%d", 0
+    27                                      
+    28 00000032 <res 00000064>              s resb 100
+    29 00000096 00000000                    ls dd 0
+    30                                      
+    31 0000009A 546865206E756D6265-         format2 db "The numbers are: ", 10, 13, 0
+    31 000000A3 7273206172653A200A-
+    31 000000AC 0D00               
+    32 000000AE 4E756D626572206973-         formatp db "Number is: %d ", 10, 13, 0
+    32 000000B7 3A202564200A0D00   
+    33                                  
+    34                                  ; our code starts here
+    35                                  segment code use32 class=code
+    36                                      start:
+    37                                          ; ...
+    38                                          ;A file name is given (defined in the data segment). Create a file with the given name, then read numbers from the keyboard and write those numbers in the file, until the value '0' is read from the keyboard.
+    39                                         
+    40                                         
+    41                                          ; fopen("week7ex12file.txt", "w")
+    42 00000000 68[04000000]                    push dword accmode
+    43 00000005 68[06000000]                    push dword filename
+    44 0000000A FF15[00000000]                  call [fopen]
+    45 00000010 83C408                          add esp, 4*2
+    46                                          
+    47                                          ; fd = EAX
+    48                                          
+    49 00000013 83F800                          cmp EAX, 0
+    50 00000016 7479                            je finish
+    51                                          
+    52 00000018 BE[32000000]                        mov esi, s
+    53 0000001D B900000000                          mov ecx, 0
+    54                                              readuntil0:
+    55 00000022 60                                      pushad
+    56                                                  
+    57                                                  ;scanf("%d", &n )
+    58 00000023 56                                      push dword esi
+    59 00000024 68[2F000000]                            push dword formats
+    60 00000029 FF15[00000000]                          call [scanf]
+    61 0000002F 83C408                                  add esp, 4*2
+    62                                                  
+    63 00000032 61                                      popad
+    64                                                  
+    65 00000033 833E00                                  cmp dword [esi], 0
+    66 00000036 7406                                    je endloop
+    67 00000038 83C604                                  add esi, 4
+    68 0000003B 41                                      inc ecx
+    69 0000003C EBE4                                jmp readuntil0     
+    70                                              endloop:
+    71                                              
+    72 0000003E 890D[96000000]                      mov [ls], ecx
+    73                                         
+    74 00000044 A3[00000000]                        mov [fd], EAX
+    75                                              
+    76                                              ;printf("The numbers are: ")
+    77 00000049 68[9A000000]                        push dword format2
+    78 0000004E FF35[00000000]                      push dword [fd]
+    79 00000054 FF15[00000000]                      call [fprintf]
+    80 0000005A 83C408                              add esp, 4*2
+    81                                              
+    82 0000005D BE[32000000]                        mov esi, s
+    83 00000062 8B0D[96000000]                      mov ecx, [ls]
+    84                                              printing:
+    85 00000068 AD                                      lodsd ; EAX a value from s
+    86                                                  
+    87 00000069 60                                      pushad
+    88                                                  
+    89                                                  ; fprintf(fd, "Number is %d: ", n)
+    90 0000006A 50                                      push dword EAX
+    91 0000006B 68[AE000000]                            push dword formatp
+    92 00000070 FF35[00000000]                          push dword [fd]
+    93 00000076 FF15[00000000]                          call [fprintf]
+    94 0000007C 83C40C                                  add esp, 4*3
+    95                                                      
+    96 0000007F 61                                      popad
+    97                                              
+    98 00000080 E2E6                                loop printing
+    99                                              
+   100                                              ; fclose(fd)
+   101 00000082 FF35[00000000]                      push dword [fd]
+   102 00000088 FF15[00000000]                      call [fclose]
+   103 0000008E 83C404                              add esp, 4
+   104                                             
+   105                                          finish:
+   106                                          
+   107                                          
+   108                                          
+   109                                          ; exit(0)
+   110 00000091 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+   111 00000093 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

@@ -1,0 +1,74 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               
+     8                                  import exit msvcrt.dll  
+     9                                  extern printf
+    10                                  import printf msvcrt.dll  
+    11                                  
+    12                                  
+    13                                  extern MMCmystringf
+    14                                  
+    15                                  
+    16                                  ; our data is declared here (the variables needed by our program)
+    17                                  segment data use32 class=data
+    18                                      ; ...
+    19 00000000 61646B6C                    s1 db 'a', 'd', 'k', 'l'
+    20 00000004 6F70616D                    s2 db 'o', 'p', 'a', 'm'
+    21                                      len1 equ 2*($-s1)
+    22                                      
+    23 00000008 00<rept>                    rez times len1 db 0
+    24                                      
+    25 00000018 737472696E67732061-         format_string db "strings are %c", 10, 13, 0
+    25 00000021 72652025630A0D00   
+    26                                      
+    27                                      
+    28                                  ; our code starts here
+    29                                  segment code use32 class=code
+    30                                      start:
+    31                                          ; ...
+    32                                          ;Two strings of characters of equal length are given. Calculate and display the results of the interleaving of the letters, 
+    33                                          ;for the two possible interlaces (the letters of the first string in an even position, respectively the letters from the first string in an odd positions). 
+    34                                          ;Where no character exist in the source string, the ‘ ’ character will replace it in the destination string. 
+    35                                          
+    36 00000000 68[08000000]                    push dword rez
+    37 00000005 6A10                            push dword len1
+    38 00000007 68[04000000]                    push dword s2
+    39 0000000C 68[00000000]                    push dword s1
+    40 00000011 E8(00000000)                    call MMCmystringf
+    41                                          
+    42                                          ; print rez
+    43 00000016 BE[08000000]                    mov esi, rez
+    44 0000001B BB00000000                      mov ebx, 0
+    45 00000020 B910000000                      mov ecx, len1
+    46                                          
+    47                                          print_loop:
+    48 00000025 B800000000                          mov eax, 0
+    49 0000002A AC                                  lodsb
+    50 0000002B 60                                  pushad
+    51                                              
+    52 0000002C 50                                  push eax
+    53 0000002D 53                                  push ebx
+    54 0000002E 68[18000000]                        push dword format_string
+    55 00000033 FF15[00000000]                      call [printf]
+    56 00000039 83C40C                              add esp, 4*3
+    57                                              
+    58 0000003C 61                                  popad
+    59 0000003D 43                                  inc ebx
+    60 0000003E E2E5                            loop print_loop
+    61                                          
+    62                                          
+    63                                          
+    64                                      
+    65                                      
+    66                                      
+    67                                      
+    68                                      
+    69                                      
+    70                                      
+    71                                          ; exit(0)
+    72 00000040 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    73 00000042 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

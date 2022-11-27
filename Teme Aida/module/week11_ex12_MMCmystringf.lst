@@ -1,0 +1,48 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  
+     5                                  
+     6                                  global MMCmystringf
+     7                                  
+     8                                  ;MMCmystringf(s1, s2, len, rez)
+     9                                  ;- 4 parameters, s1 and s2 - strings of bytes, len - int, rez - empty string of bytes
+    10                                  ;- s1, s2 are input, rez is output
+    11                                  ;- len is input, the lenghts of the arrays
+    12                                  ;- in reverse order on the stack
+    13                                  ;- uses esi, edi, ecx, ebx
+    14                                  ;-return in ebx the string
+    15                                  
+    16                                  
+    17                                  MMCmystringf:
+    18                                      ;[esp] contains the returned address
+    19                                      
+    20                                      ;mov esi, [esp+4]; s1
+    21                                      ;mov edi, [esp+8]; s2
+    22                                      ;mov ecx, [esp+12]; len
+    23                                      ;mov ebx, [esp+16]; rez
+    24                                      
+    25 00000000 8B742404                    mov esi, [esp+4]; s1
+    26 00000004 8B5C2408                    mov ebx, [esp+8]; s2
+    27 00000008 8B4C240C                    mov ecx, [esp+12]; len
+    28 0000000C 8B7C2410                    mov edi, [esp+16]; rez
+    29                                      
+    30                                      
+    31 00000010 BA00000000                  mov edx, 0
+    32 00000015 E309                        jecxz end_l
+    33                                      
+    34                                      loop_repeta:
+    35 00000017 8B3C16                          mov edi, [esi+edx]
+    36 0000001A 42                              inc edx
+    37 0000001B 8B3C17                          mov edi, [edi+edx]
+    38                                          ;movsb
+    39                                          
+    40 0000001E E2F7                        loop loop_repeta
+    41                                      end_l:
+    42                                      
+    43 00000020 C21000                      ret 16
+    44                                      
+    45                                      
+    46                                  
+    47                                  
+    48                                  

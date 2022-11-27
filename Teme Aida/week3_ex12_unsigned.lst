@@ -1,0 +1,88 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  
+    11                                  ; our data is declared here (the variables needed by our program)
+    12                                  segment data use32 class=data
+    13                                      ; ...
+    14 00000000 0A                         a db 10
+    15 00000001 3200                        b dw 50
+    16 00000003 0F                          c db 15
+    17 00000004 32000000                    d dd 50
+    18 00000008 7100000000000000            x dq 113
+    19                                  
+    20                                  ; our code starts here
+    21                                  segment code use32 class=code
+    22                                      start:
+    23                                          ; (a*b+2)/(a+7-c)+d+x; a,c-byte; b-word; d-doubleword; x-qword
+    24                                          
+    25 00000000 A0[00000000]                    mov AL, [a]
+    26 00000005 B400                            mov AH, 0; unsigned conversion from AL to AX; AX = a = 10
+    27                                          
+    28 00000007 66F725[01000000]                mul word[b]; AX = a*b; DX:AX = a*b = 500
+    29                                          
+    30 0000000E 6652                            push DX
+    31 00000010 6650                            push AX
+    32 00000012 58                              pop EAX; EAX <- DX:AX = 500
+    33                                          
+    34 00000013 83C002                          add EAX, 2; EAX <- EAX+2 = 502; EAX = a*b+2
+    35 00000016 89C1                            mov ECX, EAX; ECX = EAX = a*b+2 = 502
+    36                                          
+    37 00000018 A0[00000000]                    mov AL, [a]
+    38 0000001D 0407                            add AL, 7; AL <- AL +7 = 17
+    39 0000001F 2A05[03000000]                  sub AL, [c]; AL <- Al-c = 17-15 = 2
+    40 00000025 B400                            mov AH, 0; AL-> AX; AX = a+7-c = 2
+    41 00000027 6689C3                          mov BX, AX; BX = a+7-c = 2
+    42                                          
+    43 0000002A 89C8                            mov EAX, ECX; EAX = ECX = a*b+2 = 502
+    44 0000002C 50                              push EAX
+    45 0000002D 6658                            pop AX
+    46 0000002F 665A                            pop DX; DX:AX = EAX = 502
+    47                                          
+    48 00000031 66F7F3                          div BX; AX<-DX:AX/BX = 251; DX<-DX:AX%BX;   AX = (a*b+2)/(a+7-c) = 251
+    49                                          
+    50 00000034 66BA0000                        mov DX, 0; AX -> DX:AX
+    51                                          
+    52 00000038 6652                            push DX
+    53 0000003A 6650                            push AX
+    54 0000003C 58                              pop EAX; EAX <- DX:AX = (a*b+2)/(a+7-c)
+    55 0000003D 0305[04000000]                  add EAX, [d]; EAX <- EAX+d = 251+50 = 301
+    56                                          
+    57 00000043 BA00000000                      mov EDX, 0; EAX -> EDX:EAX
+    58 00000048 0305[08000000]                  add EAX, [x+0]
+    59 0000004E 1315[0C000000]                  adc EDX, [x+4]
+    60                                          
+    61                                          
+    62                                          
+    63                                      
+    64                                          ;mov BL, [a]
+    65                                          ;add BL, 7; BL <- BL+7 = 10+7 = 17
+    66                                          ;sub BL, [c]; BL <- BL-c = 17-15 = 2
+    67                                          
+    68                                          ;div BL; AL<- AX/BL = 251; AH<-AX%BL
+    69                                          ;mov AH, 0; AL->AX
+    70                                          ;mov DX, 0; AX->DX:AX
+    71                                          
+    72                                          
+    73                                          
+    74                                          ;push DX
+    75                                          ;push AX
+    76                                          ;pop EAX; EAX <- DX:AX
+    77                                          ;add EAX, [d]; EAX <- EAX+d = 251+50 = 301
+    78                                          
+    79                                          ;mov EDX, 0; EAX -> EDX:EAX
+    80                                          ;add EAX, [x+0]
+    81                                         ; adc EDX, [x+4]
+    82                                          
+    83                                          
+    84                                         
+    85                                          
+    86                                          ; exit(0)
+    87 00000054 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    88 00000056 FF15[00000000]                  call    [exit]       ; call exit to terminate the program

@@ -1,0 +1,65 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, scanf, printf               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                  import scanf msvcrt.dll                          ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  import printf msvcrt.dll
+    11                                  
+    12                                  ; our data is declared here (the variables needed by our program)
+    13                                  segment data use32 class=data
+    14                                      ; ...
+    15 00000000 616161747361303100          sir db 'a', 'a', 'a', 't', 's', 'a', '0', '1', 0
+    16                                      len equ ($-sir)
+    17 00000009 256300                      format db "%c", 0
+    18 0000000C 546865206368617261-         formatp db "The character %c apears %d times", 0
+    18 00000015 637465722025632061-
+    18 0000001E 706561727320256420-
+    18 00000027 74696D657300       
+    19 0000002D 00                          s db 0
+    20                                  
+    21                                  ; our code starts here
+    22                                  segment code use32 class=code
+    23                                      start:
+    24                                          ; ...A character string is given (defined in the data segment). 
+    25                                          ;Read one character from the keyboard, then count the number of occurences of that character 
+    26                                          ;in the given string and display the character along with its number of occurences. 
+    27                                      
+    28 00000000 68[2D000000]                    push dword s
+    29 00000005 68[09000000]                    push dword format
+    30 0000000A FF15[00000000]                  call [scanf]
+    31 00000010 83C408                          add esp,4*2
+    32                                          
+    33 00000013 8A0D[2D000000]                  mov cl, byte [s]
+    34                                        
+    35 00000019 BE[00000000]                    mov esi, sir 
+    36 0000001E B909000000                      mov ecx, len
+    37                                          ;mov edi, 0
+    38 00000023 BA00000000                      mov edx, 0
+    39                                          do: 
+    40 00000028 8A06                                mov al, byte[esi]
+    41 0000002A 84C8                                test al, cl
+    42 0000002C 7401                                je finish
+    43 0000002E 42                                      inc edx
+    44                                              finish:
+    45 0000002F 46                                  inc esi
+    46 00000030 E2F6                            loop do
+    47                                  
+    48 00000032 52                              push dword edx
+    49 00000033 FF35[2D000000]                  push dword [s]
+    50 00000039 68[0C000000]                    push dword formatp
+    51 0000003E FF15[00000000]                  call [printf]
+    52 00000044 83C40C                          add esp, 4*3
+    53                                          
+    54                                          
+    55                                              
+    56                                              
+    57                                              
+    58                                      
+    59                                      
+    60                                          ; exit(0)
+    61 00000047 6A00                            push    dword 0      ; push the parameter for exit onto the stack
+    62 00000049 FF15[00000000]                  call    [exit]       ; call exit to terminate the program
